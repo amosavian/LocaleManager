@@ -26,14 +26,15 @@ import ObjectiveC
  - Important: If you used other libraries like maximbilan/ios_language_manager before, call `applyLocale(identifier: nil)`
      for the first time to remove remnants in order to avoid conflicting.
 */
+
 public class LocaleManager: NSObject {
     /// This handler will be called after every change in language. You can change it to handle minor localization issues in user interface.
-    public static var updateHandler: () -> Void = {
+    @objc public static var updateHandler: () -> Void = {
         return
     }
     
     /// Returns Base localization identifier
-    public class var base: String {
+    @objc public class var base: String {
         return "Base"
     }
     
@@ -48,7 +49,7 @@ public class LocaleManager: NSObject {
      
      - Return: A dictionary that keys are language identifiers and values are localized language name
     */
-    public class var availableLocalizations: [String: String] {
+    @objc public class var availableLocalizations: [String: String] {
         let keys = Bundle.main.localizations
         let vals = keys.map({ Locale.userPreferred.localizedString(forIdentifier: $0) ?? $0 })
         return [String: String].init(zip(keys, vals), uniquingKeysWith: { v, _ in v })
@@ -106,7 +107,7 @@ public class LocaleManager: NSObject {
      
      - Parameter identifier: Locale identifier to be applied, e.g. `en` or `fa_IR`. `nil` value will change locale to system-wide.
      */
-    public class func apply(identifier: String?, animated: Bool = true) {
+    @objc public class func apply(identifier: String?, animated: Bool = true) {
         let semantic: UISemanticContentAttribute
         if let identifier = identifier {
             applyLocale(identifier: identifier)
@@ -126,7 +127,7 @@ public class LocaleManager: NSObject {
     /**
      This method MUST be called in `application(_:didFinishLaunchingWithOptions:)` method.
      */
-    public class func setup() {
+    @objc public class func setup() {
         // Allowing to update localized string on the fly.
         Bundle.swizzleMethod(#selector(Bundle.localizedString(forKey:value:table:)),
                              with: #selector(Bundle.specialLocalizedString(forKey:value:table:)))
@@ -225,8 +226,23 @@ public extension Locale {
     }
 }
 
-extension NSNumber {
-    func localized(precision: Int = 0, style: NumberFormatter.Style = .decimal) -> String {
+public extension NSLocale {
+    @objc  public class var userPreferred: Locale {
+        return Locale.userPreferred
+    }
+    
+    @objc public var isRTL: Bool {
+        if #available(iOS 10.0, *) {
+            return NSLocale.characterDirection(forLanguage: self.languageCode) == .rightToLeft
+        } else {
+            let languageCode = self.object(forKey: .languageCode) as? String
+            return languageCode.flatMap(NSLocale.characterDirection(forLanguage:)) == .rightToLeft
+        }
+    }
+}
+
+public extension NSNumber {
+    @objc public func localized(precision: Int = 0, style: NumberFormatter.Style = .decimal) -> String {
         let formatter = NumberFormatter()
         formatter.maximumFractionDigits = precision
         formatter.numberStyle = style
@@ -234,13 +250,14 @@ extension NSNumber {
         return formatter.string(from: self)!
     }
 }
-extension String {
-    func localizedFormat(_ args: CVarArg...) -> String {
-        return String(format: self, locale: Locale.preferred, arguments: args)
+
+public extension String {
+    public func localizedFormat(_ args: CVarArg...) -> String {
+        return String(format: self, locale: Locale.userPreferred, arguments: args)
     }
 }
 
-extension NSObject {
+internal extension NSObject {
     @discardableResult
     class func swizzleMethod(_ selector: Selector, with withSelector: Selector) -> Bool {
         
