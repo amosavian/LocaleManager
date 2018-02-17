@@ -53,7 +53,7 @@ Your app should provide localizations' list to user. You can fetch list of avail
 let languages = LocaleManager.availableLocalizations
 ```
 
-Now `languages` variable is a dictionay, If you don't have any localization, the dictionary will be `["Base": "Base"]`, all other localizations will be added after.
+Now `languages` variable is a dictionary, If you don't have any localization, the dictionary will be `["Base": "Base"]`, all other localizations will be added after.
 
 You must pass dictionary's key to `LocaleManager`'s methods, while dictionary values are localized name of corresponding key. E.g. "de" will be "German" for English environment while it will be "Deutsch" in German environment.
 
@@ -64,15 +64,21 @@ When user selected a localization, follow next step.
 Nothing special here, just add following line:
 
 ```swift
-let languageId = language[1].key
+let languageId = "fa"
 LocaleManager.apply(identifier: languageId)
 ```
 
 This will cause a flip animation while changing language. If you don't want that:
 
 ```swift
-let languageId = language[1].key // e.g "en"
+let languageId = "en"
 LocaleManager.apply(identifier: languageId, animated: false)
+```
+
+To remove any custom localization and allow iOS to select a localization according system language:
+
+```swift
+LocaleManager.apply(identifier: nil)
 ```
 
 ### Get active locale
