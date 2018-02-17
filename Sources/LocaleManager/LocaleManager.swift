@@ -248,6 +248,9 @@ public extension NSNumber {
 
 public extension String {
     public func localizedFormat(_ args: CVarArg...) -> String {
+        if args.isEmpty {
+            return self
+        }
         return String(format: self, locale: Locale.userPreferred, arguments: args)
     }
 }
