@@ -45,7 +45,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 ```
 
-Second, you **must set** `Storyboard ID` for your root view controller in `Main.storyboard`.
+### Prepare storyboard
+
+Set `Storyboard ID` for your root view controller in `Main.storyboard` to a non-nil string.
 
 ### Show available localizations to user
 
@@ -124,8 +126,8 @@ let formattedText = template.localizedFormat(completedText, totalText)
 
 ## Known issues
 
-Check [Issues](issues) page.
+Check [Issues](https://github.com/amosavian/LocaleManager/issues) page.
 
 ## Contribute
 
-We would love for you to contribute to FileProvider, check the LICENSE file for more info.
+We would love for you to contribute to LocaleManager, check the LICENSE file for more info.
