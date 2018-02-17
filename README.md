@@ -45,6 +45,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 ```
 
+Second, you **must set** `Storyboard ID` for your root view controller in `Main.storyboard`.
+
 ### Show available localizations to user
 
 Your app should provide localizations' list to user. You can fetch list of available localizations according to your project by:
