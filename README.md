@@ -18,7 +18,8 @@ First you must clone this project from github:
 git clone https://github.com/amosavian/LocaleManager
 ```
 
-Then you can either install manually by adding `Sources/LocaleManager` directory to your project or create a `xcodeproj` file and add it as a dynamic framework:
+Then you can either install manually by adding `Sources/LocaleManager` directory to your project 
+or create a `xcodeproj` file and add it as a dynamic framework:
 
 ```bash
 swift package generate-xcodeproj
@@ -51,15 +52,18 @@ Set `Storyboard ID` for your root view controller in `Main.storyboard` to a non-
 
 ### Show available localizations to user
 
-Your app should provide localizations' list to user. You can fetch list of available localizations according to your project by:
+Your app should provide localizations' list to user.
+You can fetch list of available localizations according to your project by:
 
 ```swift
 let languages = LocaleManager.availableLocalizations
 ```
 
-Now `languages` variable is a dictionary, If you don't have any localization, the dictionary will be `["Base": "Base"]`, all other localizations will be added after.
+Now `languages` variable is a dictionary. If you don't have any localization, 
+the dictionary will be `["Base": "Base"]`, all other localizations will be added after.
 
-You must pass dictionary's key to `LocaleManager`'s methods, while dictionary values are localized name of corresponding key. E.g. "de" will be "German" for English environment while it will be "Deutsch" in German environment.
+You must pass dictionary's key to `LocaleManager`'s methods, while dictionary values are localized name of corresponding key. 
+E.g. "de" will be "German" for English environment while it will be "Deutsch" in German environment.
 
 When user selected a localization, follow next step.
 
@@ -84,6 +88,9 @@ To remove any custom localization and allow iOS to select a localization accordi
 ```swift
 LocaleManager.apply(identifier: nil)
 ```
+
+If you used other libraries like [maximbilan/ios_language_manager](https://github.com/maximbilan/ios_language_manager) before,
+call `LocaleManager.apply(identifier: nil)` for the first time to remove remnants in order to avoid conflicting.
 
 ### Get active locale
 
@@ -111,9 +118,10 @@ label.text = (n as NSNumber).localized(style: .percent)
 ```
 
 
-### Formatted strings
+### Formatted strings (Swift only)
 
-Using `NSLocalizedString()` method you can fetch localized string from `Localizable.strings` file. In case the returned string is a formattable text, you can fill placeholders easily:
+Using `NSLocalizedString()` method you can fetch localized string from `Localizable.strings` file.
+In case the returned string is a formattable text, you can fill placeholders easily:
 
 ```swift
 let completed = 10
@@ -123,6 +131,16 @@ let totalText = = (total as NSNumber).localized()
 let template = NSLocalizedString("Progress %@ out of %@ items", comment: "")
 let formattedText = template.localizedFormat(completedText, totalText)
 ```
+
+### Mirrored Images
+
+Due to an underlying bug in iOS, if you have an image which should be flipped for RTL languages,
+don't use asset's direction property to mirror image,
+use `image.imageFlippedForRightToLeftLayoutDirection()` to initialize flippable image instead.
+
+### Fixing non-updating localized strings
+
+If you encounter a problem in updating localized strings (e.g. tabbar items' title) set `LocaleManager.updateHandler` variable to a block which manually fix and update UI element.
 
 ## Known issues
 

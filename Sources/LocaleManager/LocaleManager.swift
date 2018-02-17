@@ -227,17 +227,12 @@ public extension Locale {
 }
 
 public extension NSLocale {
-    @objc  public class var userPreferred: Locale {
+    @objc public class var userPreferred: Locale {
         return Locale.userPreferred
     }
     
     @objc public var isRTL: Bool {
-        if #available(iOS 10.0, *) {
-            return NSLocale.characterDirection(forLanguage: self.languageCode) == .rightToLeft
-        } else {
-            let languageCode = self.object(forKey: .languageCode) as? String
-            return languageCode.flatMap(NSLocale.characterDirection(forLanguage:)) == .rightToLeft
-        }
+        return (self as Locale).isRTL
     }
 }
 
