@@ -33,6 +33,13 @@ public class LocaleManager: NSObject {
         return
     }
     
+    /**
+     This handler will be called to get localized string before checking bundle. Allows custom translation for system strings.
+     
+     - Important: **DON'T USE** `NSLocalizedString()` inside the closure body. Use a `Dictionary` instead.
+    */
+    @objc public static var customTranslation: ((String) -> String?)? = nil
+    
     /// Returns Base localization identifier
     @objc public class var base: String {
         return "Base"
@@ -130,18 +137,19 @@ public class LocaleManager: NSObject {
     @objc public class func setup() {
         // Allowing to update localized string on the fly.
         Bundle.swizzleMethod(#selector(Bundle.localizedString(forKey:value:table:)),
-                             with: #selector(Bundle.specialLocalizedString(forKey:value:table:)))
+                             with: #selector(Bundle.mn_custom_localizedString(forKey:value:table:)))
         // Enforcing userInterfaceLayoutDirection based on selected locale. Fixes pop gesture in navigation controller.
         UIApplication.swizzleMethod(#selector(getter: UIApplication.userInterfaceLayoutDirection),
-                                    with: #selector(getter: UIApplication.custom_userInterfaceLayoutDirection))
+                                    with: #selector(getter: UIApplication.mn_custom_userInterfaceLayoutDirection))
         // Enforcing currect alignment for labels which has `.natural` direction.
-        UILabel.swizzleMethod(#selector(UILabel.layoutSubviews), with: #selector(UILabel.custom_layoutSubviews))
+        UILabel.swizzleMethod(#selector(UILabel.layoutSubviews), with: #selector(UILabel.mn_custom_layoutSubviews))
     }
 }
 
-extension UILabel {
+public extension UILabel {
     private struct AssociatedKeys {
         static var originalAlignment = "lm_originalAlignment"
+        static var forcedAlignment = "lm_forcedAlignment"
     }
     
     var originalAlignment: NSTextAlignment? {
@@ -161,43 +169,85 @@ extension UILabel {
         }
     }
     
-    @objc func custom_layoutSubviews() {
+    public var forcedAlignment: NSTextAlignment? {
+        get {
+            return (objc_getAssociatedObject(self, &AssociatedKeys.forcedAlignment) as? Int).flatMap(NSTextAlignment.init(rawValue:))
+        }
+        
+        set {
+            if let newValue = newValue {
+                objc_setAssociatedObject(
+                    self,
+                    &AssociatedKeys.forcedAlignment,
+                    newValue.rawValue as NSNumber,
+                    .OBJC_ASSOCIATION_RETAIN_NONATOMIC
+                )
+            }
+        }
+    }
+    
+    @objc internal func mn_custom_layoutSubviews() {
         if originalAlignment == nil {
             originalAlignment = self.textAlignment
         }
         
-        // Workaround placeholder
-        if self.superview is UITextField && self.superview?.superview?.superview is UISearchBar {
+        if let forcedAlignment = forcedAlignment {
+            self.textAlignment = forcedAlignment
+        } else if originalAlignment == .natural {
             self.textAlignment = Locale._userPreferred.isRTL ? .right : .left
         }
         
-        if originalAlignment == .natural {
-            self.textAlignment = Locale._userPreferred.isRTL ? .right : .left
-        }
-        self.custom_layoutSubviews()
+        self.mn_custom_layoutSubviews()
     }
 }
 
 extension UIApplication {
-    @objc var custom_userInterfaceLayoutDirection: UIUserInterfaceLayoutDirection {
+    @objc var mn_custom_userInterfaceLayoutDirection: UIUserInterfaceLayoutDirection {
         get {
-            let _ = self.custom_userInterfaceLayoutDirection // DO NOT OPTIMZE!
+            let _ = self.mn_custom_userInterfaceLayoutDirection // DO NOT OPTIMZE!
             return Locale._userPreferred.isRTL ? .rightToLeft : .leftToRight
         }
     }
 }
 
 extension Bundle {
-    @objc func specialLocalizedString(forKey key: String, value: String?, table tableName: String?) -> String {
-        let currentLanguage = Locale._userPreferred.identifier
-        var bundle = Bundle();
-        if let _path = Bundle.main.path(forResource: currentLanguage, ofType: "lproj") {
-            bundle = Bundle(path: _path)!
-        } else {
-            let _path = Bundle.main.path(forResource: LocaleManager.base, ofType: "lproj")!
-            bundle = Bundle(path: _path)!
+    @objc func mn_custom_localizedString(forKey key: String, value: String?, table tableName: String?) -> String {
+        
+        func englishName(for lang: String) -> String? {
+            return Locale(identifier: "en").localizedString(forLanguageCode: lang)
         }
-        return (bundle.specialLocalizedString(forKey: key, value: value, table: tableName))
+        
+        if let customString = LocaleManager.customTranslation?(key)  {
+            return customString
+        }
+        
+        let userPreferred = Locale._userPreferred.identifier
+        let current = Locale.current.identifier
+        let bundle: Bundle
+        // Check for user preferred locale (e.g en_GB, ru)
+        if let _path = self.path(forResource: userPreferred, ofType: "lproj") {
+            bundle = Bundle(path: _path)!
+        } else
+        // Check for user preferred locale if system uses old naming (e.g English, Japanese)
+        if let _path = englishName(for: userPreferred).flatMap({ self.path(forResource: $0, ofType: "lproj") }) {
+            bundle = Bundle(path: _path)!
+        } else
+        // Check for system-defined current locale
+        if let _path = self.path(forResource: current, ofType: "lproj") {
+            bundle = Bundle(path: _path)!
+        } else
+        // Check for system-defined current locale if system uses old naming (e.g English, Japanese)
+        if let _path = englishName(for: current).flatMap({ self.path(forResource: $0, ofType: "lproj") }) {
+            bundle = Bundle(path: _path)!
+        } else
+        // Check for base locale ("Base")
+        if let _path = self.path(forResource: LocaleManager.base, ofType: "lproj") {
+            bundle = Bundle(path: _path)!
+        // No bundle, returning passed string
+        } else {
+            return key
+        }
+        return (bundle.mn_custom_localizedString(forKey: key, value: value, table: tableName))
     }
 }
 
