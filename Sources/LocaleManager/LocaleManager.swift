@@ -211,13 +211,20 @@ extension UIApplication {
 }
 
 extension Bundle {
+    private static var savedLanguageNames: [String: String] = [:]
+    
     @objc func mn_custom_localizedString(forKey key: String, value: String?, table tableName: String?) -> String {
         
-        func englishName(for lang: String) -> String? {
-            return Locale(identifier: "en").localizedString(forLanguageCode: lang)
+        func languageName(for lang: String) -> String? {
+            if let langName = Bundle.savedLanguageNames[lang] {
+                return langName
+            }
+            let langName = Locale(identifier: "en").localizedString(forLanguageCode: lang)
+            Bundle.savedLanguageNames[lang] = langName
+            return langName
         }
         
-        if let customString = LocaleManager.customTranslation?(key)  {
+        if let customString = LocaleManager.customTranslation?(key) {
             return customString
         }
         
@@ -229,7 +236,7 @@ extension Bundle {
             bundle = Bundle(path: _path)!
         } else
         // Check for user preferred locale if system uses old naming (e.g English, Japanese)
-        if let _path = englishName(for: userPreferred).flatMap({ self.path(forResource: $0, ofType: "lproj") }) {
+        if let _path = languageName(for: userPreferred).flatMap({ self.path(forResource: $0, ofType: "lproj") }) {
             bundle = Bundle(path: _path)!
         } else
         // Check for system-defined current locale
@@ -237,7 +244,7 @@ extension Bundle {
             bundle = Bundle(path: _path)!
         } else
         // Check for system-defined current locale if system uses old naming (e.g English, Japanese)
-        if let _path = englishName(for: current).flatMap({ self.path(forResource: $0, ofType: "lproj") }) {
+        if let _path = languageName(for: current).flatMap({ self.path(forResource: $0, ofType: "lproj") }) {
             bundle = Bundle(path: _path)!
         } else
         // Check for base locale ("Base")
