@@ -72,25 +72,32 @@ When user selected a localization, follow next step.
 Nothing special here, just add following line:
 
 ```swift
-let languageId = "fa"
-LocaleManager.apply(identifier: languageId)
+let localeID = "fa"
+LocaleManager.apply(identifier: localeID)
+```
+
+If you have `Locale` object instead of identifier:
+
+```swift
+let locale = Locale(identifier: "fa")
+LocaleManager.apply(locale: locale)
 ```
 
 This will cause a flip animation while changing language. If you don't want that:
 
 ```swift
-let languageId = "en"
-LocaleManager.apply(identifier: languageId, animated: false)
+let localeID = "en"
+LocaleManager.apply(identifier: localeID, animated: false)
 ```
 
 To remove any custom localization and allow iOS to select a localization according system language:
 
 ```swift
-LocaleManager.apply(identifier: nil)
+LocaleManager.apply(locale: nil)
 ```
 
 If you used other libraries like [maximbilan/ios_language_manager](https://github.com/maximbilan/ios_language_manager) before,
-call `LocaleManager.apply(identifier: nil)` for the first time to remove remnants in order to avoid conflicting.
+call `LocaleManager.apply(locale: nil)` for the first time to remove remnants in order to avoid conflicting.
 
 ### Get active locale
 
@@ -138,9 +145,9 @@ Due to an underlying bug in iOS, if you have an image which should be flipped fo
 don't use asset's direction property to mirror image,
 use `image.imageFlippedForRightToLeftLayoutDirection()` to initialize flippable image instead.
 
-### Fixing non-updating localized strings
+### Extra steps
 
-If you encounter a problem in updating localized strings (e.g. tabbar items' title) set `LocaleManager.updateHandler` variable to a block which manually fix and update UI element.
+If your app needs extra steps for updating interface (e.g. clearing caches), use `LocaleManager.updateHandler` property.
 
 ## Known issues
 

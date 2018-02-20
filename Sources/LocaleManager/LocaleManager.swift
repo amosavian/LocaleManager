@@ -90,8 +90,8 @@ public class LocaleManager: NSObject {
      
      - Parameter identifier: Locale identifier to be applied, e.g. `en`, `fa`, `de_DE`, etc.
      */
-    private class func applyLocale(identifier: String) {
-        UserDefaults.standard.set([identifier], forKey: "AppleLanguages")
+    private class func setLocale(identifiers: [String]) {
+        UserDefaults.standard.set(identifiers, forKey: "AppleLanguages")
         UserDefaults.standard.synchronize()
         Locale.cachePreffered = nil
     }
@@ -110,15 +110,14 @@ public class LocaleManager: NSObject {
     }
     
     /**
-     Overrides system-wide locale in application and reload.
+     Overrides system-wide locale in application and reloads interface.
      
      - Parameter identifier: Locale identifier to be applied, e.g. `en` or `fa_IR`. `nil` value will change locale to system-wide.
      */
-    @objc public class func apply(identifier: String?, animated: Bool = true) {
+    @objc public class func apply(locale: Locale?, animated: Bool = true) {
         let semantic: UISemanticContentAttribute
-        if let identifier = identifier {
-            applyLocale(identifier: identifier)
-            let locale = Locale(identifier: identifier)
+        if let locale = locale {
+            setLocale(identifiers: [locale.identifier])
             semantic = locale.isRTL ? .forceRightToLeft : .forceLeftToRight
         } else {
             removeLocale()
@@ -129,6 +128,16 @@ public class LocaleManager: NSObject {
         
         reloadWindows(animated: animated)
         updateHandler()
+    }
+    
+    /**
+     Overrides system-wide locale in application and reloads interface.
+     
+     - Parameter identifier: Locale identifier to be applied, e.g. `en` or `fa_IR`. `nil` value will change locale to system-wide.
+     */
+    @objc public class func apply(identifier: String?, animated: Bool = true) {
+        let locale = identifier.map(Locale.init(identifier:))
+        apply(locale: locale, animated: animated)
     }
     
     /**
@@ -213,45 +222,54 @@ extension UIApplication {
 extension Bundle {
     private static var savedLanguageNames: [String: String] = [:]
     
-    @objc func mn_custom_localizedString(forKey key: String, value: String?, table tableName: String?) -> String {
-        
-        func languageName(for lang: String) -> String? {
-            if let langName = Bundle.savedLanguageNames[lang] {
-                return langName
-            }
-            let langName = Locale(identifier: "en").localizedString(forLanguageCode: lang)
-            Bundle.savedLanguageNames[lang] = langName
+    private func languageName(for lang: String) -> String? {
+        if let langName = Bundle.savedLanguageNames[lang] {
             return langName
         }
-        
+        let langName = Locale(identifier: "en").localizedString(forLanguageCode: lang)
+        Bundle.savedLanguageNames[lang] = langName
+        return langName
+    }
+    
+    fileprivate func resourcePath(for locale: Locale) -> String? {
+        /*
+         After swizzling localizedString() method, this procedure will be used even for system provided frameworks.
+         Thus we shall try to find appropriate localization resource in current bundle, not main.
+         
+         Apple's framework
+         
+         Trying to find appropriate lproj resource in the bundle ordered by:
+         1. Locale identifier (e.g: en_GB, fa_IR)
+         2. Locale language code (e.g en, fa)
+         3. Locale language name (e.g English, Japanese), used as resource name in Apple system bundles' localization (Foundation, UIKit, ...)
+         */
+        if let path = self.path(forResource: locale.identifier, ofType: "lproj") {
+            return path
+        } else if let path = locale.languageCode.flatMap(languageName(for:)).flatMap({ self.path(forResource: $0, ofType: "lproj") }) {
+            return path
+        } else if let path = languageName(for: locale.identifier).flatMap({ self.path(forResource: $0, ofType: "lproj") }) {
+            return path
+        } else {
+            return nil
+        }
+    }
+    
+    @objc func mn_custom_localizedString(forKey key: String, value: String?, table tableName: String?) -> String {
         if let customString = LocaleManager.customTranslation?(key) {
             return customString
         }
         
-        let userPreferred = Locale._userPreferred.identifier
-        let current = Locale.current.identifier
+        /*
+         Trying to find lproj resource first in user preferred locale, then system-wide current locale, and finally "Base"
+         */
         let bundle: Bundle
-        // Check for user preferred locale (e.g en_GB, ru)
-        if let _path = self.path(forResource: userPreferred, ofType: "lproj") {
-            bundle = Bundle(path: _path)!
-        } else
-        // Check for user preferred locale if system uses old naming (e.g English, Japanese)
-        if let _path = languageName(for: userPreferred).flatMap({ self.path(forResource: $0, ofType: "lproj") }) {
-            bundle = Bundle(path: _path)!
-        } else
-        // Check for system-defined current locale
-        if let _path = self.path(forResource: current, ofType: "lproj") {
-            bundle = Bundle(path: _path)!
-        } else
-        // Check for system-defined current locale if system uses old naming (e.g English, Japanese)
-        if let _path = languageName(for: current).flatMap({ self.path(forResource: $0, ofType: "lproj") }) {
-            bundle = Bundle(path: _path)!
-        } else
-        // Check for base locale ("Base")
-        if let _path = self.path(forResource: LocaleManager.base, ofType: "lproj") {
-            bundle = Bundle(path: _path)!
-        // No bundle, returning passed string
-        } else {
+        if let path = resourcePath(for: Locale._userPreferred) {
+            bundle = Bundle(path: path)!
+        } else if let path = resourcePath(for: Locale.current) {
+            bundle = Bundle(path: path)!
+        } else if let path = self.path(forResource: LocaleManager.base, ofType: "lproj") {
+            bundle = Bundle(path: path)!
+        } else  {
             return key
         }
         return (bundle.mn_custom_localizedString(forKey: key, value: value, table: tableName))
