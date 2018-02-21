@@ -4,6 +4,14 @@ This library handles changing locale/language on the fly.
 
 User interface direction will be updated automatically for right-to-left languages.
 
+<center>
+
+[![Swift Version][swift-image]][swift-url]
+[![Platform][platform-image]](#)
+[![License][license-image]][license-url]
+[![Release version][release-image]][release-url]
+</center>
+
 ## Requirements
 
 - Swift 4.0 or higher
@@ -49,6 +57,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 ### Prepare storyboard
 
 Set `Storyboard ID` for your root view controller in `Main.storyboard` to a non-nil string.
+
+If you don't use storyboard, set `LocaleManager.rootViewController` to a closure or method that
+returns an instance of root view controller of your application.
 
 ### Show available localizations to user
 
@@ -156,3 +167,12 @@ Check [Issues](https://github.com/amosavian/LocaleManager/issues) page.
 ## Contribute
 
 We would love for you to contribute to LocaleManager, check the LICENSE file for more info.
+
+[swift-image]: https://img.shields.io/badge/swift-4.0-orange.svg
+[swift-url]: https://swift.org/
+[platform-image]: https://img.shields.io/badge/platform-ios-lightgray.svg
+[license-image]: https://img.shields.io/github/license/amosavian/LocaleManager.svg
+[license-url]: LICENSE
+[release-url]: https://github.com/amosavian/FileProvider/releases
+[release-image]: https://img.shields.io/github/release/amosavian/LocaleManager.svg
+

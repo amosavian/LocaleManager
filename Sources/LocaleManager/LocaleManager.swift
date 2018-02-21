@@ -34,11 +34,18 @@ public class LocaleManager: NSObject {
     }
     
     /**
+     This handler will be called to get root viewController to initialize.
+     
+     - Important: Either this property or storyboard identifier's of root view controller must be set.
+     */
+    @objc public static var rootViewController: (() -> UIViewController)? = nil
+    
+    /**
      This handler will be called to get localized string before checking bundle. Allows custom translation for system strings.
      
      - Important: **DON'T USE** `NSLocalizedString()` inside the closure body. Use a `Dictionary` instead.
     */
-    @objc public static var customTranslation: ((String) -> String?)? = nil
+    @objc public static var customTranslation: ((_ key: String) -> String?)? = nil
     
     /// Returns Base localization identifier
     @objc public class var base: String {
@@ -65,12 +72,15 @@ public class LocaleManager: NSObject {
     /**
      Reloads all windows to apply orientation changes in user interface.
      
-     - Important: storyboardIdentifier of root viewcontroller in Main.storyboard must set to a string.
+     - Important: Either rootViewController must be set or storyboardIdentifier of root viewcontroller
+         in Main.storyboard must set to a string.
     */
     internal class func reloadWindows(animated: Bool = true) {
         let windows = UIApplication.shared.windows
         for window in windows {
-            if let storyboard = window.rootViewController?.storyboard, let id = window.rootViewController?.value(forKey: "storyboardIdentifier") as? String {
+            if let rootViewController = self.rootViewController?() {
+                window.rootViewController = rootViewController
+            }else if let storyboard = window.rootViewController?.storyboard, let id = window.rootViewController?.value(forKey: "storyboardIdentifier") as? String {
                 window.rootViewController = storyboard.instantiateViewController(withIdentifier: id)
             }
             for view in (window.subviews) {
@@ -93,7 +103,6 @@ public class LocaleManager: NSObject {
     private class func setLocale(identifiers: [String]) {
         UserDefaults.standard.set(identifiers, forKey: "AppleLanguages")
         UserDefaults.standard.synchronize()
-        Locale.cachePreffered = nil
     }
     
     /// Removes user preferred locale and resets locale to system-wide.
@@ -106,7 +115,6 @@ public class LocaleManager: NSObject {
         UserDefaults.standard.removeObject(forKey: "NSForceRightToLeftWritingDirection")
         
         UserDefaults.standard.synchronize()
-        Locale.cachePreffered = nil
     }
     
     /**
@@ -123,6 +131,7 @@ public class LocaleManager: NSObject {
             removeLocale()
             semantic = .forceLeftToRight
         }
+        Locale.cachePreffered = nil
         UIView.appearance().semanticContentAttribute = semantic
         UITableView.appearance().semanticContentAttribute = semantic
         
@@ -150,8 +159,64 @@ public class LocaleManager: NSObject {
         // Enforcing userInterfaceLayoutDirection based on selected locale. Fixes pop gesture in navigation controller.
         UIApplication.swizzleMethod(#selector(getter: UIApplication.userInterfaceLayoutDirection),
                                     with: #selector(getter: UIApplication.mn_custom_userInterfaceLayoutDirection))
-        // Enforcing currect alignment for labels which has `.natural` direction.
+        // Enforcing currect alignment for labels and texts which has `.natural` direction.
         UILabel.swizzleMethod(#selector(UILabel.layoutSubviews), with: #selector(UILabel.mn_custom_layoutSubviews))
+        UITextField.swizzleMethod(#selector(UITextField.layoutSubviews), with: #selector(UITextField.mn_custom_layoutSubviews))
+    }
+}
+
+public extension UITextField {
+    private struct AssociatedKeys {
+        static var originalAlignment = "lm_originalAlignment"
+        static var forcedAlignment = "lm_forcedAlignment"
+    }
+    
+    var originalAlignment: NSTextAlignment? {
+        get {
+            return (objc_getAssociatedObject(self, &AssociatedKeys.originalAlignment) as? Int).flatMap(NSTextAlignment.init(rawValue:))
+        }
+        
+        set {
+            if let newValue = newValue {
+                objc_setAssociatedObject(
+                    self,
+                    &AssociatedKeys.originalAlignment,
+                    newValue.rawValue as NSNumber,
+                    .OBJC_ASSOCIATION_RETAIN_NONATOMIC
+                )
+            }
+        }
+    }
+    
+    public var forcedAlignment: NSTextAlignment? {
+        get {
+            return (objc_getAssociatedObject(self, &AssociatedKeys.forcedAlignment) as? Int).flatMap(NSTextAlignment.init(rawValue:))
+        }
+        
+        set {
+            if let newValue = newValue {
+                objc_setAssociatedObject(
+                    self,
+                    &AssociatedKeys.forcedAlignment,
+                    newValue.rawValue as NSNumber,
+                    .OBJC_ASSOCIATION_RETAIN_NONATOMIC
+                )
+            }
+        }
+    }
+    
+    @objc internal func mn_custom_layoutSubviews() {
+        if originalAlignment == nil {
+            originalAlignment = self.textAlignment
+        }
+        
+        if let forcedAlignment = forcedAlignment {
+            self.textAlignment = forcedAlignment
+        } else if originalAlignment == .natural {
+            self.textAlignment = Locale._userPreferred.isRTL ? .right : .left
+        }
+        
+        self.mn_custom_layoutSubviews()
     }
 }
 
