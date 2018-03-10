@@ -334,8 +334,12 @@ extension Bundle {
             bundle = Bundle(path: path)!
         } else if let path = self.path(forResource: LocaleManager.base, ofType: "lproj") {
             bundle = Bundle(path: path)!
-        } else  {
-            return key
+        } else {
+            if let value = value, !value.isEmpty {
+                return value
+            } else {
+                return key
+            }
         }
         return (bundle.mn_custom_localizedString(forKey: key, value: value, table: tableName))
     }
