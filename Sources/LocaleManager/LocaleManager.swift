@@ -129,7 +129,7 @@ public class LocaleManager: NSObject {
             semantic = locale.isRTL ? .forceRightToLeft : .forceLeftToRight
         } else {
             removeLocale()
-            semantic = .forceLeftToRight
+            semantic = .unspecified
         }
         Locale.cachePreffered = nil
         UIView.appearance().semanticContentAttribute = semantic
@@ -338,10 +338,10 @@ extension Bundle {
             if let value = value, !value.isEmpty {
                 return value
             } else {
-                return key
+                bundle = self
             }
         }
-        return (bundle.mn_custom_localizedString(forKey: key, value: value, table: tableName))
+        return bundle.mn_custom_localizedString(forKey: key, value: value, table: tableName)
     }
 }
 
@@ -361,26 +361,52 @@ public extension Locale {
         return cachePreffered!
     }
     
-    public static var userPreferred: Locale {
-        return Locale.preferredLanguages.first.map(Locale.init(identifier:)) ?? Locale.current
+    fileprivate static var baseLocale: Locale {
+        let base = Locale.preferredLanguages.first(where: { $0 != LocaleManager.base }) ?? "en_US"
+        return Locale.init(identifier: base)
     }
     
+    /**
+     Locale selected by user.
+     */
+    public static var userPreferred: Locale {
+        let preffered = Locale.preferredLanguages.first.map(Locale.init(identifier:)) ?? Locale.current
+        let localizations = Bundle.main.localizations.map( { $0.replacingOccurrences(of: "-", with: "_") } )
+        let preferredId = preffered.identifier.replacingOccurrences(of: "-", with: "_")
+        return localizations.contains(preferredId) ? preffered : baseLocale
+    }
+    
+    /**
+     Checking the locale writing direction is right to left.
+     */
     public var isRTL: Bool {
         return Locale.characterDirection(forLanguage: self.languageCode!) == .rightToLeft
     }
 }
 
 public extension NSLocale {
+    /**
+     Locale selected by user.
+     */
     @objc public class var userPreferred: Locale {
         return Locale.userPreferred
     }
     
+    /**
+     Checking the locale writing direction is right to left.
+     */
     @objc public var isRTL: Bool {
         return (self as Locale).isRTL
     }
 }
 
 public extension NSNumber {
+    /**
+     Returns localized formatted number with maximum fraction digit according to `precision`.
+     
+     - Parameter precision: The maximum number of digits after the decimal separator allowed.
+     - Parameter style: The number style.
+     */
     @objc public func localized(precision: Int = 0, style: NumberFormatter.Style = .decimal) -> String {
         let formatter = NumberFormatter()
         formatter.maximumFractionDigits = precision
@@ -391,6 +417,10 @@ public extension NSNumber {
 }
 
 public extension String {
+    /**
+     Returns a String object initialized by using a given format string as a template into which
+     the remaining argument values are substituted according to user preferred locale information.
+     */
     public func localizedFormat(_ args: CVarArg...) -> String {
         if args.isEmpty {
             return self
@@ -408,7 +438,6 @@ internal extension NSObject {
         
         originalMethod = class_getInstanceMethod(self, selector)
         swizzledMethod = class_getInstanceMethod(self, withSelector)
-        
         
         if (originalMethod != nil && swizzledMethod != nil) {
             if class_addMethod(self, selector, method_getImplementation(swizzledMethod!), method_getTypeEncoding(swizzledMethod!)) {
@@ -431,7 +460,11 @@ internal extension NSObject {
         swizzledMethod = class_getClassMethod(self, withSelector)
         
         if (originalMethod != nil && swizzledMethod != nil) {
-            method_exchangeImplementations(originalMethod!, swizzledMethod!)
+            if class_addMethod(self, selector, method_getImplementation(swizzledMethod!), method_getTypeEncoding(swizzledMethod!)) {
+                class_replaceMethod(self, withSelector, method_getImplementation(originalMethod!), method_getTypeEncoding(originalMethod!))
+            } else {
+                method_exchangeImplementations(originalMethod!, swizzledMethod!)
+            }
             return true
         }
         return false
