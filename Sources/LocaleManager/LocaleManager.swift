@@ -129,7 +129,7 @@ public class LocaleManager: NSObject {
             semantic = locale.isRTL ? .forceRightToLeft : .forceLeftToRight
         } else {
             removeLocale()
-            semantic = .unspecified
+            semantic = Locale.baseLocale.isRTL ? .forceRightToLeft : .forceLeftToRight
         }
         Locale.cachePreffered = nil
         UIView.appearance().semanticContentAttribute = semantic
