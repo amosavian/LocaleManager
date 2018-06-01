@@ -134,6 +134,7 @@ public class LocaleManager: NSObject {
         Locale.cachePreffered = nil
         UIView.appearance().semanticContentAttribute = semantic
         UITableView.appearance().semanticContentAttribute = semantic
+        UISwitch.appearance().semanticContentAttribute = semantic
         
         reloadWindows(animated: animated)
         updateHandler()
