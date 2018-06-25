@@ -14,8 +14,9 @@ before_install:
 script:
   - set -o pipefail
   - xcodebuild -version
-  - swift build
-  - swift test
+  - swift package generate-xcodeproj
+  - xcodebuild -project "$PROJECT" -scheme "$SCHEME" -sdk iphonesimulator -configuration Debug ONLY_ACTIVE_ARCH=NO build | xcpretty
+  - xcodebuild -project "$PROJECT" -scheme "$SCHEME" -sdk iphonesimulator -configuration Release ONLY_ACTIVE_ARCH=NO build | xcpretty
   - pod lib lint --quick
 
 after_success:
