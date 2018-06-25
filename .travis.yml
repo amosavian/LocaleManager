@@ -4,6 +4,7 @@ xcode_project: $PROJECTNAME.xcodeproj
 env:
   global: 
   - PROJECT="$PROJECTNAME.xcodeproj"
+  - $SCHEME="$PROJECTNAME-Package"
   - FRAMEWORK_NAME="$PROJECTNAME.framework"
 
 before_install:
