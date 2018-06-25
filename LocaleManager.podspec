@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "LocaleManager"
-  s.version      = "1.2.0"
+  s.version      = "1.3.0"
   s.summary      = "Changing iOS locale and language on the fly without exiting. RTL supported."
 
   # This description is used to generate tags and improve search results.
