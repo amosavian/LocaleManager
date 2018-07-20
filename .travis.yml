@@ -33,7 +33,7 @@ before_deploy:
       brew outdated carthage || brew upgrade carthage;
       carthage version;
       swift package generate-xcodeproj;
-      carthage build  --platform ios --no-skip-current --verbose;
+      carthage build --platform ios --no-skip-current --verbose;
       carthage archive $PROJECTNAME;
     fi
 

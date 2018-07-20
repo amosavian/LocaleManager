@@ -10,6 +10,7 @@ User interface direction will be updated automatically for right-to-left languag
 [![Platform][platform-image]](#)
 [![License][license-image]][license-url]
 [![Release version][release-image]][release-url]
+
 </center>
 
 ## Requirements

@@ -38,7 +38,7 @@ public class LocaleManager: NSObject {
      
      - Important: Either this property or storyboard identifier's of root view controller must be set.
      */
-    @objc public static var rootViewController: (() -> UIViewController)? = nil
+    @objc public static var rootViewController: ((_ window: UIWindow) -> UIViewController?)? = nil
     
     /**
      This handler will be called to get localized string before checking bundle. Allows custom translation for system strings.
@@ -78,9 +78,9 @@ public class LocaleManager: NSObject {
     internal class func reloadWindows(animated: Bool = true) {
         let windows = UIApplication.shared.windows
         for window in windows {
-            if let rootViewController = self.rootViewController?() {
+            if let rootViewController = self.rootViewController?(window) {
                 window.rootViewController = rootViewController
-            }else if let storyboard = window.rootViewController?.storyboard, let id = window.rootViewController?.value(forKey: "storyboardIdentifier") as? String {
+            } else if let storyboard = window.rootViewController?.storyboard, let id = window.rootViewController?.value(forKey: "storyboardIdentifier") as? String {
                 window.rootViewController = storyboard.instantiateViewController(withIdentifier: id)
             }
             for view in (window.subviews) {
