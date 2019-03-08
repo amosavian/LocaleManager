@@ -266,6 +266,19 @@ public extension UILabel {
             originalAlignment = self.textAlignment
         }
         
+        // Workaround placeholder
+        /*if self.superview is UITextField && self.superview?.superview?.superview is UISearchBar {
+            self.textAlignment = Locale._userPreferred.isRTL ? .right : .left
+            if let attributedText = self.attributedText {
+                var attributes = attributedText.attributes(at: 0, effectiveRange: nil)
+                if let style = (attributes[.paragraphStyle] as? NSParagraphStyle)?.mutableCopy() as? NSMutableParagraphStyle {
+                    style.alignment = Locale._userPreferred.isRTL ? .right : .left
+                    attributes[.paragraphStyle] = style
+                    self.attributedText = NSAttributedString(string: attributedText.string, attributes: attributes)
+                }
+            }
+        }*/
+        
         if let forcedAlignment = forcedAlignment {
             self.textAlignment = forcedAlignment
         } else if originalAlignment == .natural {
