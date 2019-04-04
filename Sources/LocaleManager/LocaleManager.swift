@@ -122,6 +122,7 @@ public class LocaleManager: NSObject {
      
      - Parameter identifier: Locale identifier to be applied, e.g. `en` or `fa_IR`. `nil` value will change locale to system-wide.
      */
+    @available(iOS 9.0, *)
     @objc public class func apply(locale: Locale?, animated: Bool = true) {
         let semantic: UISemanticContentAttribute
         if let locale = locale {
@@ -145,6 +146,7 @@ public class LocaleManager: NSObject {
      
      - Parameter identifier: Locale identifier to be applied, e.g. `en` or `fa_IR`. `nil` value will change locale to system-wide.
      */
+    @available(iOS 9.0, *)
     @objc public class func apply(identifier: String?, animated: Bool = true) {
         let locale = identifier.map(Locale.init(identifier:))
         apply(locale: locale, animated: animated)
