@@ -189,7 +189,7 @@ public extension UITextField {
         }
     }
     
-    public var forcedAlignment: NSTextAlignment? {
+    var forcedAlignment: NSTextAlignment? {
         get {
             return (objc_getAssociatedObject(self, &AssociatedKeys.forcedAlignment) as? Int).flatMap(NSTextAlignment.init(rawValue:))
         }
@@ -244,7 +244,7 @@ public extension UILabel {
         }
     }
     
-    public var forcedAlignment: NSTextAlignment? {
+    var forcedAlignment: NSTextAlignment? {
         get {
             return (objc_getAssociatedObject(self, &AssociatedKeys.forcedAlignment) as? Int).flatMap(NSTextAlignment.init(rawValue:))
         }
@@ -383,7 +383,7 @@ public extension Locale {
     /**
      Locale selected by user.
      */
-    public static var userPreferred: Locale {
+    static var userPreferred: Locale {
         let preffered = Locale.preferredLanguages.first.map(Locale.init(identifier:)) ?? Locale.current
         let localizations = Bundle.main.localizations.map( { $0.replacingOccurrences(of: "-", with: "_") } )
         let preferredId = preffered.identifier.replacingOccurrences(of: "-", with: "_")
@@ -393,7 +393,7 @@ public extension Locale {
     /**
      Checking the locale writing direction is right to left.
      */
-    public var isRTL: Bool {
+    var isRTL: Bool {
         return Locale.characterDirection(forLanguage: self.languageCode!) == .rightToLeft
     }
 }
@@ -402,14 +402,14 @@ public extension NSLocale {
     /**
      Locale selected by user.
      */
-    @objc public class var userPreferred: Locale {
+    @objc class var userPreferred: Locale {
         return Locale.userPreferred
     }
     
     /**
      Checking the locale writing direction is right to left.
      */
-    @objc public var isRTL: Bool {
+    @objc var isRTL: Bool {
         return (self as Locale).isRTL
     }
 }
@@ -421,7 +421,7 @@ public extension NSNumber {
      - Parameter precision: The maximum number of digits after the decimal separator allowed.
      - Parameter style: The number style.
      */
-    @objc public func localized(precision: Int = 0, style: NumberFormatter.Style = .decimal) -> String {
+    @objc func localized(precision: Int = 0, style: NumberFormatter.Style = .decimal) -> String {
         let formatter = NumberFormatter()
         formatter.maximumFractionDigits = precision
         formatter.numberStyle = style
@@ -435,7 +435,7 @@ public extension String {
      Returns a String object initialized by using a given format string as a template into which
      the remaining argument values are substituted according to user preferred locale information.
      */
-    public func localizedFormat(_ args: CVarArg...) -> String {
+    func localizedFormat(_ args: CVarArg...) -> String {
         if args.isEmpty {
             return self
         }

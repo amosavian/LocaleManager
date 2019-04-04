@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "LocaleManager"
-  s.version      = "1.3.0"
+  s.version      = "1.4.0"
   s.summary      = "Changing iOS locale and language on the fly without exiting. RTL supported."
 
   # This description is used to generate tags and improve search results.
@@ -67,7 +67,7 @@ Pod::Spec.new do |s|
   # s.platform     = :ios, "5.0"
 
   #  When using multiple platforms
-  s.swift_version = "4.2"
+  s.swift_version = "5.0"
   s.ios.deployment_target = "9.0"
   # s.osx.deployment_target = "10.11"
   # s.watchos.deployment_target = "2.0"
