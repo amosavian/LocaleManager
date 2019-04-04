@@ -15,9 +15,9 @@ User interface direction will be updated automatically for right-to-left languag
 
 ## Requirements
 
-- Swift 4.0 or higher
+- Swift 5.0 or higher
 - iOS 9.0
-- XCode 9.0
+- XCode 10.2
 
 ## Installation
 
@@ -169,7 +169,7 @@ Check [Issues](https://github.com/amosavian/LocaleManager/issues) page.
 
 We would love for you to contribute to LocaleManager, check the LICENSE file for more info.
 
-[swift-image]: https://img.shields.io/badge/swift-4.0-orange.svg
+[swift-image]: https://img.shields.io/badge/swift-5.0-orange.svg
 [swift-url]: https://swift.org/
 [platform-image]: https://img.shields.io/badge/platform-ios-lightgray.svg
 [license-image]: https://img.shields.io/github/license/amosavian/LocaleManager.svg
